@@ -141,10 +141,6 @@ class EzOptimizeResult():
     """
     Enhanced result object for optimizations performed via ez-optimize.
 
-    Adds support for:
-    - Named/dict mode results (x_dict)
-    - Restored original shapes/structures (x_original)
-    - Automatic sign correction when direction='max'
     """
     def __init__(
             self,
@@ -153,39 +149,30 @@ class EzOptimizeResult():
             x_map: Optional[list[str]] = None, 
             x_to_original: Optional[Callable[[np.ndarray], Any]] = None,
             direction: str = 'min',
-            **extra_attrs
         ):
         # super().__init__(**scipy_result.__dict__)
         self.scipy_result = scipy_result
         self._x_mode = x_mode  # Store mode ('array' or 'dict')
         self._x_map = x_map  # Store sorted keys from x0 dict
-        self.x_flat = scipy_result.x  # flat optimized parameters
         self._x_to_original = x_to_original
         self._direction = direction
+        self.x_flat = scipy_result.x  # flat optimized parameters
 
-        # Attach any extra attributes
-        for k, v in extra_attrs.items():
-            setattr(self, k, v)
+        # Process: Restore x to original structure
+        if self._x_to_original:
+            self.x = self._x_to_original(scipy_result.x)
+        else:
+            self.x = scipy_result.x
 
-    @property
-    def x_original(self) -> Union[np.ndarray, Dict[str, float]]:
-        '''
-        x_original property returns the optimized parameters as a numpy array or dictionary based on the mode.
-        '''
-        return self._restore_original_x()
+        # Process: Correct sign for maximization
+        self.fun = scipy_result.fun
+        if self._direction == "max" and self.fun is not None:
+            self.fun = -self.fun
+        # Similarly for jac if present: self.jac = -scipy_result.jac if applicable
     
-    def _restore_original_x(self) -> Union[np.ndarray, Dict[str, Any]]:
-        """Convert flat optimized x back to original form (dict or shaped array)."""
-        if self._x_to_original is None:
-            return self.x_flat
-
-        try:
-            restored = self._x_to_original(self.x_flat)
-        except Exception as e:
-            warnings.warn(f"Failed to restore original shape: {e}", RuntimeWarning)
-            restored = self.x_flat
-
-        return restored
-
+        # Attach other attributes from scipy_result
+        for attr in dir(scipy_result):
+            if not attr.startswith('_') and attr not in ('x', 'fun', 'jac'):  # Avoid overwriting processed ones
+                setattr(self, attr, getattr(scipy_result, attr))
 
     

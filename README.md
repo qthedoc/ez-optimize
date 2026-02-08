@@ -33,7 +33,7 @@ x0 = {'x': 1.3, 'y': 0.7}
 
 result = minimize(rosenbrock_2d, x0, method='BFGS')
 
-print(f"Optimal x: {result.x_original}")
+print(f"Optimal x: {result.x}")
 print(f"Optimal value: {result.fun}")
 ```
 ```
@@ -64,7 +64,7 @@ scipy_result = scipy_minimize(**problem.scipy.get_minimize_args())
 # Use the OptimizationProblem to interpret the result back into our structured format
 result = problem.scipy.interpret_result(scipy_result)
 
-print(f"Optimal parameters: {result.x_original}")
+print(f"Optimal parameters: {result.x}")
 print(f"Optimal value: {result.fun}")
 ```
 ```
