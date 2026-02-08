@@ -30,7 +30,7 @@ def test_array_5d(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(5), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(5), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
 
 
@@ -43,10 +43,10 @@ def test_kw_2d(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(2), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(2), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
-    assert isinstance(res.x_original, dict)
-    assert_allclose(list(res.x_original.values()), np.ones(2), atol=1e-4, rtol=1e-4)
+    assert isinstance(res.x, dict)
+    assert_allclose(list(res.x.values()), np.ones(2), atol=1e-4, rtol=1e-4)
 
 @pytest.mark.parametrize("method", no_grad_methods, ids=no_grad_methods)
 def test_kw_array(method: str):
@@ -57,10 +57,10 @@ def test_kw_array(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(5), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(5), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
-    assert isinstance(res.x_original, dict)
-    assert_allclose(res.x_original['x'], np.ones(5), atol=1e-4, rtol=1e-4)
+    assert isinstance(res.x, dict)
+    assert_allclose(res.x['x'], np.ones(5), atol=1e-4, rtol=1e-4)
 
 def test_array_direction_max():
     def f(x):
@@ -71,7 +71,7 @@ def test_array_direction_max():
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, 1.0, atol=1e-4)
+    assert_allclose(res.x_flat, 1.0, atol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8)
 
 
@@ -84,10 +84,10 @@ def test_kw_direction_max():
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(1), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(1), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
-    assert isinstance(res.x_original, dict)
-    assert_allclose(res.x_original['x'], np.ones(1), atol=1e-4, rtol=1e-4)
+    assert isinstance(res.x, dict)
+    assert_allclose(res.x['x'], np.ones(1), atol=1e-4, rtol=1e-4)
 
 @pytest.mark.parametrize("method", ["SLSQP", "L-BFGS-B"], ids=["SLSQP", "L-BFGS-B"])
 def test_array_with_bounds(method: str):
@@ -99,7 +99,7 @@ def test_array_with_bounds(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(5), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(5), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
 
 
@@ -113,10 +113,10 @@ def test_kw_with_bounds(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(2), atol=1e-2, rtol=1e-2)
+    assert_allclose(res.x_flat, np.ones(2), atol=1e-2, rtol=1e-2)
     assert_allclose(res.fun, 0.0, atol=1e-5, rtol=1e-5)
-    assert isinstance(res.x_original, dict)
-    assert_allclose(list(res.x_original.values()), np.ones(2), atol=1e-2, rtol=1e-2)
+    assert isinstance(res.x, dict)
+    assert_allclose(list(res.x.values()), np.ones(2), atol=1e-2, rtol=1e-2)
 
 @pytest.mark.parametrize("method", ["SLSQP", "L-BFGS-B"], ids=["SLSQP", "L-BFGS-B"])
 def test_kw_array_with_bounds(method: str):
@@ -128,7 +128,7 @@ def test_kw_array_with_bounds(method: str):
     res = prob.optimize()
 
     assert isinstance(res, EzOptimizeResult)
-    assert_allclose(res.x, np.ones(5), atol=1e-4, rtol=1e-4)
+    assert_allclose(res.x_flat, np.ones(5), atol=1e-4, rtol=1e-4)
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
-    assert isinstance(res.x_original, dict)
-    assert_allclose(res.x_original['x'], np.ones(5), atol=1e-4, rtol=1e-4)
+    assert isinstance(res.x, dict)
+    assert_allclose(res.x['x'], np.ones(5), atol=1e-4, rtol=1e-4)

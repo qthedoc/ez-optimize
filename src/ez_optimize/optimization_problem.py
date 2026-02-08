@@ -119,7 +119,10 @@ class OptimizationProblem:
         for k in self.x_keys:
             shape = self.x_map[k]
             size = np.prod(shape, dtype=int)
-            result[k] = flat[idx : idx + size].reshape(shape)
+            if shape == ():  # Scalar case: convert to float
+                result[k] = float(flat[idx])
+            else:  # Array case: reshape to array
+                result[k] = flat[idx : idx + size].reshape(shape)
             idx += size
         return result
     
@@ -207,18 +210,11 @@ class OptimizationProblem:
         def interpret_result(self, scipy_result: OptimizeResult) -> EzOptimizeResult:
             """Convert SciPy result into EasyOptimizeResult with restored structure."""
 
+            # result_dict = dict(scipy_result)
+
             # Check success and warn if not successful
             if not scipy_result.success:
                 warnings.warn(f"Optimization did not converge: {scipy_result.message}", RuntimeWarning)
-
-            result_dict = dict(scipy_result)
-
-            # Correct sign for maximization
-            if self.parent.direction == "max":
-                if "fun" in result_dict and result_dict["fun"] is not None:
-                    result_dict["fun"] = -result_dict.get("fun", 0.0)
-                # if "jac" in result_dict and result_dict["jac"] is not None:
-                #     result_dict["jac"] = -result_dict["jac"]
 
             return EzOptimizeResult(
                 scipy_result=scipy_result,
@@ -226,7 +222,6 @@ class OptimizationProblem:
                 x_map=self.parent.x_map,
                 x_to_original=self.parent.x_to_original,
                 direction=self.parent.direction,
-                **result_dict,
             )
         
         # ─── SciPy-specific wrappers ────────────────────────────────────────
