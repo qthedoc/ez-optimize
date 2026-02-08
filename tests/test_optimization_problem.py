@@ -38,7 +38,7 @@ def test_array_5d(method: str):
 def test_kw_2d(method: str):
     x0 = {'x': 1.3, 'y': 0.7}
 
-    prob = OptimizationProblem(partial(rosen_2d_kw, a=100, b=0), x0, method=method, tol=1e-8)
+    prob = OptimizationProblem(rosen_2d_kw, x0, kwargs={'a': 100, 'b': 0}, method=method, tol=1e-8)
 
     res = prob.optimize()
 

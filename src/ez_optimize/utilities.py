@@ -74,46 +74,70 @@ def wrap_reconstruct_args(
     x_mode: str,
     x_to_original: Callable[[np.ndarray], Any],
     pos_arg_names: list[str] = None,               # e.g. ['p'] for hessp
+    user_args: tuple = (),
+    user_kwargs: dict = None,
 ) -> Optional[Callable]:
     """
     Returns a wrapped version of a function that:
     - take flat x (and optionally other args like p) for SciPy compatibility
     - reconstruct original parameter structure
-    - call user function
+    - call user function with additional args/kwargs
 
     Args:
         fun: The user-provided callable (objective, jac, hess, hessp, ...)
         x_mode: "array" or "dict"
         x_to_original: Function that turns flat array → original x (dict or array)
         pos_arg_names: Names to map positional args to (e.g. ['p'] for hessp)
+        user_args: Additional positional arguments to pass to the user function
+        user_kwargs: Additional keyword arguments to pass to the user function
+
+    TODO: could make this super abstract with a generic expected_pos_arg_map that handles 'x' and 'p' and their formats. 
+    maybe a list of objects:
+    [
+        {
+            'name': 'x',
+            'mode': 'array' or 'dict',
+            'reconstruct': x_to_original,
+        },
+        {
+            'name': 'p',
+            'mode': 'array' or 'dict',
+            'reconstruct': p_to_original,  # if needed
+        },
+        ...
+    ]
     """
     if fun is None:
         return None
 
     pos_arg_names = pos_arg_names or []
+    user_kwargs = user_kwargs or {}
 
-    def wrapped(x_flat: np.ndarray, *extra_args) -> Any:
+    def wrapped(x_flat: np.ndarray, *extra_pos_args) -> Any:
+        """
+        Wrapped function that reconstructs x and calls the user function with appropriate args/kwargs.
+        Args:
+            x_flat: The flat array of parameters from the optimizer.
+            *extra_pos_args: Additional positional arguments (e.g. scipy.optimize calls hessp(x, p), p for hessp).
+        """
         # Reconstruct original parameters
         x = x_to_original(x_flat)
 
         # Prepare call arguments
         if x_mode == "dict":
-            call_args = x.copy()  # dict
-        else:
-            call_args = [x]       # positional for array mode
+            # Map positional extra args (e.g. p for hessp)
+            extra_args_as_kwargs = {}
+            for name, value in zip(pos_arg_names, extra_pos_args):
+                if name in extra_args_as_kwargs:
+                    raise ValueError(f"Duplicate argument: {name}")
+                extra_args_as_kwargs[name] = value
 
-        # Map positional extra args (e.g. p for hessp)
-        extra_kwargs = {}
-        for name, value in zip(pos_arg_names, extra_args):
-            if name in extra_kwargs:
-                raise ValueError(f"Duplicate argument: {name}")
-            extra_kwargs[name] = value
-
-        # Call the function
-        if x_mode == "dict":
-            result = call_with_kwargs(fun, {**call_args, **extra_kwargs})
+            # Call the function
+            result = call_with_kwargs(fun, {**user_kwargs, **x, **extra_args_as_kwargs})
+        
         else:
-            result = fun(*call_args, *extra_args)
+            # Call the function
+            result = fun(x, *extra_pos_args, *user_args, **user_kwargs)
 
         return result
 
