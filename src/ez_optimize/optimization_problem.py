@@ -119,7 +119,10 @@ class OptimizationProblem:
         for k in self.x_keys:
             shape = self.x_map[k]
             size = np.prod(shape, dtype=int)
-            result[k] = flat[idx : idx + size].reshape(shape)
+            if shape == ():  # Scalar case: convert to float
+                result[k] = float(flat[idx])
+            else:  # Array case: reshape to array
+                result[k] = flat[idx : idx + size].reshape(shape)
             idx += size
         return result
     
