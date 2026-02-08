@@ -12,7 +12,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 authors = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
 maintainers = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
-description = "A drop-in for scipy optimize that allows keyword args (x0={'x': 1, 'y': 2}) and more"
+description = "A more intuitive front-end for scipy.optimize with keyword params x0={'x': 1, 'y': 2} and more"
 readme = "README.md"
 license = {text = "MIT License"}
 keywords = [
@@ -26,7 +26,7 @@ keywords = [
   "quality of life"
 ]
 classifiers =[
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3.10",

@@ -5,9 +5,12 @@
 **GitHub**: https://github.com/qthedoc/ez-optimize/ \
 **PyPI**: https://pypi.org/project/ez-optimize/ 
 
-`ez-optimize` makes optimization easy and intuitive. It is a lightweight wrapper for SciPy's `optimize` that offer a drop-in replacements for SciPy's `minimize` function with enhanced features like keyword-based parameter definitions and quick switching between minimization and maximization.
 
-The Ironman suit for optimization.
+`ez-optimize` is a more intuitive front-end for `scipy.optimize` that simplifies optimization with features like:
+- keyword-based parameter definitions (e.g., `x0={'x': 1, 'y': 2}`)
+- easy switching between minimization and maximization (`direction='max'`)
+
+`ez-optimize` is the Ironman suit for optimization.
 
 ## Why ez-optimize?
 
@@ -17,10 +20,17 @@ By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more in
 ### 2. Switch to Maximize with `direction='max'`
 By default, optimization minimizes the objective function. To maximize, you typically need to write a negated version of your function. With `ez-optimize`, simply set `direction='max'` and the library will automatically negates your function under the hood.
 
+## Quick Start
 
-## Examples
+**Install:** 
+```
+pip install ez-optimize
+```
 
-### Example 1: Minimizing the Rosenbrock Function with Array Mode
+**Full set of examples**: [examples.ipynb](./docs/examples.ipynb)*\
+*This is currently the main form of documentation.
+
+### Example 1: Minimizing with Keyword-Based Parameters
 
 ```python
 import numpy as np
