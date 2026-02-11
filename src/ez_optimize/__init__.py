@@ -1,7 +1,8 @@
 import logging
 
-from ez_optimize.minimize import minimize
-from ez_optimize.optimization_problem import OptimizationProblem
+from .minimize import minimize
+from .optimization_problem import OptimizationProblem
+from ._version import __version__
 
 _log = logging.getLogger(__name__)
 
