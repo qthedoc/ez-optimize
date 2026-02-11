@@ -30,13 +30,16 @@ class OptimizationProblem:
         direction: Literal["min", "max"] = "min",
         bounds: Optional[Union[List[Tuple[float, float]], Dict[str, Tuple[float, float]], Dict[str, List[Tuple[float, float]]]]] = None,
         x_mode: Optional[Literal["array", "dict"]] = None,
+        args: Optional[Tuple] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        
         # fused_fun_map: Optional[Union[Literal["dict"], tuple[str, ...], Dict[str, str]]] = None,
         # jac: Optional[Callable] = None,
         # hess: Optional[Callable] = None,
         # hessp: Optional[Callable] = None,
-        **kwargs,  # bounds, constraints, args, options, etc. stored for later use
+        **optimizer_kwargs,  # bounds, constraints, tol, options, etc. stored for later use
     ):
-        # Mode & flattening setup
+        # Detect mode & flattening of x0, store mapping for later reconstruction
         self._prepare_parameters(x0, x_mode)
 
         self._prepare_bounds(bounds)
@@ -48,13 +51,26 @@ class OptimizationProblem:
         if self.direction not in ("min", "max"):
             raise ValueError("direction must be 'min' or 'max'")
 
+        # Validate and store args and user_kwargs
+        self.user_args = args if args is not None else ()
+        self.user_kwargs = kwargs if kwargs is not None else {}
+        
+        # Validate args usage based on x_mode
+        if self.x_mode == "dict" and len(self.user_args) > 0:
+            raise ValueError("Positional args are not allowed in 'dict' mode. Use user_kwargs instead.")
+        
+        # Check for conflicting kwargs in dict mode
+        if self.x_mode == "dict" and self.user_kwargs:
+            conflicting_keys = set(self.x_keys) & set(self.user_kwargs.keys())
+            if conflicting_keys:
+                warnings.warn(
+                    f"Conflicting parameter names found in x0 and user_kwargs: {conflicting_keys}. "
+                    "Values from x0 will take precedence during optimization.",
+                    UserWarning
+                )
 
-        # Pass-through kwargs (bounds, constraints, tol, options, args, etc.)
-        self.kwargs = kwargs
-
-
-        # Return map for fused objectives
-        # self.fused_fun_map = fused_fun_map
+        # Pass-through optimizer_kwargs (bounds, constraints, tol, options, etc.)
+        self.optimizer_kwargs = optimizer_kwargs
 
     # ────────────────────────────────────────────────────────────────
     # Public API – backend agnostic
@@ -203,7 +219,7 @@ class OptimizationProblem:
             }
 
             # Merge any extra kwargs
-            args.update(self.parent.kwargs)
+            args.update(self.parent.optimizer_kwargs)
 
             return args
 
@@ -236,41 +252,11 @@ class OptimizationProblem:
             fun = wrap_reconstruct_args(
                 fun=fun,
                 x_mode=self.parent.x_mode,
-                x_to_original=self.parent.x_to_original
+                x_to_original=self.parent.x_to_original,
+                user_args=self.parent.user_args,
+                user_kwargs=self.parent.user_kwargs,
             )
 
             fun = wrap_negate_if_max(fun, self.parent.direction)
 
             return fun
-
-        # def _wrap_jac(self, jac_func: Optional[Callable]) -> Callable:
-        #     if not jac_func:
-        #         return None
-
-        #     def wrapped(x_flat):
-        #         x = self.parent.flat_to_original(x_flat)
-        #         g = jac_func(**x) if self.parent.x_mode == "dict" else jac_func(x)
-        #         return -g if self.parent.direction == "max" else g
-
-        #     return wrapped
-
-        # def _wrap_hess(self, hess_func: Optional[Callable]) -> Callable:
-        #     # Hessian usually not negated
-        #     def wrapped(x_flat):
-        #         x = self.parent.flat_to_original(x_flat)
-        #         return hess_func(**x) if self.parent.x_mode == "dict" else hess_func(x)
-
-        #     return wrapped
-
-        # def _wrap_hessp(self, hessp_func: Optional[Callable]) -> Callable:
-        #     def wrapped(x_flat, p):
-        #         x = self.parent.flat_to_original(x_flat)
-        #         return hessp_func(x=x, p=p) if self.parent.x_mode == "array" else hessp_func(**x, p=p)
-
-        #     return wrapped
-
-        # def _add_fused_derivatives(self, args: dict):
-        #     # TODO: extract value, grad, hess from fused call
-        #     # For now just placeholder
-        #     raise NotImplementedError("Fused derivatives not yet implemented")
-        

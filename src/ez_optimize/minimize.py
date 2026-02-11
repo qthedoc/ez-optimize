@@ -15,7 +15,9 @@ def minimize(
     direction: Literal["min", "max"] = "min",
     bounds: Optional[Union[List[Tuple[float, float]], Dict[str, Tuple[float, float]], Dict[str, List[Tuple[float, float]]]]] = None,
     x_mode: Optional[Literal["array", "dict"]] = None,
-    **kwargs,  # bounds, constraints, args, options, etc. stored for later use
+    args: Optional[Tuple] = None,
+    kwargs: Optional[Dict[str, Any]] = None,
+    **optimizer_kwargs,  # bounds, constraints, tol, options, etc. stored for later use
 ) -> EzOptimizeResult:
     """
     Minimize (or maximize) a scalar function of one or more variables.
@@ -28,8 +30,8 @@ def minimize(
     ----------
     fun : callable
         The objective function to be minimized (or maximized).
-        For array mode: fun(x) where x is a numpy array.
-        For dict mode: fun(**params) where params is a dict of parameters.
+        For array mode: fun(x, *args, **kwargs) where x is a numpy array.
+        For dict mode: fun(**params, **kwargs) where params is a dict of parameters.
     x0 : array_like or dict
         Initial guess. Array of real elements of size (n,),
         or dict with parameter names as keys.
@@ -42,7 +44,15 @@ def minimize(
     bounds : sequence or dict, optional
         Bounds on variables. For array mode: list of (min, max) pairs.
         For dict mode: dict with same keys as x0, values as (min, max) or list of pairs.
-    **kwargs
+    args : tuple, optional
+        Additional positional arguments to pass to the objective function.
+        Not allowed in 'dict' mode (will raise ValueError).
+        In 'array' mode, these are passed after the x array: fun(x, *args).
+    kwargs : dict, optional
+        Additional keyword arguments to pass to the objective function.
+        In 'dict' mode, if keys conflict with x0 keys, x0 values take precedence
+        and a warning is issued.
+    **optimizer_kwargs
         Additional keyword arguments passed to the optimizer.
 
     Returns
@@ -67,6 +77,8 @@ def minimize(
         direction=direction,
         x_mode=x_mode,
         bounds=bounds,
-        **kwargs
+        args=args,
+        kwargs=kwargs,
+        **optimizer_kwargs
     )
     return problem.optimize()

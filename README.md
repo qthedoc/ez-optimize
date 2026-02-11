@@ -5,20 +5,19 @@
 **GitHub**: https://github.com/qthedoc/ez-optimize/ \
 **PyPI**: https://pypi.org/project/ez-optimize/ 
 
-
 `ez-optimize` is a more intuitive front-end for `scipy.optimize` that simplifies optimization with features like:
 - keyword-based parameter definitions (e.g., `x0={'x': 1, 'y': 2}`)
 - easy switching between minimization and maximization (`direction='max'`)
 
-`ez-optimize` is the Ironman suit for optimization.
+`ez-optimize` is your Ironman suit for optimization.
 
 ## Why ez-optimize?
 
 ### 1. Keyword-Based Optimization (e.g.: `x0={'x': 1, 'y': 2}`)
-By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more intuitive to use named parameters `x0={'x': 1, 'y': 2}`. `ez-optimize` allows you to define parameters as dictionaries. Then under the hood, `ez-optimize` automatically flattens parameters (and wraps your function) for SciPy while restoring the original structure in results. Keyword-based optimization is especially useful in complex systems like aerospace or energy models where parameters have meaningful names representing physical quantities.
+By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more intuitive to use named parameters `x0={'x': 1, 'y': 2}`. `ez-optimize` allows you to define parameters as dictionaries. Then under the hood, `ez-optimize` automatically flattens parameters (and wraps your function) for SciPy while restoring the original structure in results. Keyword-based optimization is especially useful in physical systems like aerospace or energy simulations where parameters have meaningful names representing physical quantities.
 
 ### 2. Switch to Maximize with `direction='max'`
-By default, optimization minimizes the objective function. To maximize, you typically need to write a negated version of your function. With `ez-optimize`, simply set `direction='max'` and the library will automatically negates your function under the hood.
+By default, optimization minimizes the objective function. To maximize, you typically need to write a negated version of your function. With `ez-optimize`, simply set `direction='max'` and the library will automatically negate your function under the hood.
 
 ## Quick Start
 
@@ -33,14 +32,12 @@ pip install ez-optimize
 ### Example 1: Minimizing with Keyword-Based Parameters
 
 ```python
-import numpy as np
 from ez_optimize import minimize
 
-def rosenbrock_2d(x, y, a, b):
+def rosenbrock_2d(x, y, a=1, b=100):
     return (a - x)**2 + b * (y - x**2)**2
 
 x0 = {'x': 1.3, 'y': 0.7}
-
 result = minimize(rosenbrock_2d, x0, method='BFGS')
 
 print(f"Optimal x: {result.x}")
@@ -51,9 +48,9 @@ Optimal x: {'x': 1.0, 'y': 1.0}
 Optimal value: 0.0
 ```
 
-### Example 2: Using OptimizationProblem for Advanced Manual Control
+### Example 2: Using OptimizationProblem wrapper for Manual Control
 
-For more control, use the `OptimizationProblem` class directly. This also serves as a look under the hood for how `minimize` works.:
+For more control, use the `OptimizationProblem` class directly. This also serves as a look under the hood for how `ez-optimize` works.:
 
 ```python
 from ez_optimize import OptimizationProblem
@@ -82,8 +79,8 @@ Optimal parameters: {'a': 0.0, 'b': 0.0, 'c': 0.0}
 Optimal value: 0.0
 ```
 
-## Fundumentally Why?
-Lets be honest, there is good reason optimization typically uses arrays and always minimizes... it makes the math simple and efficient. For example, optimizing in a vector space allows the hessian to be represented as a matrix. However, this level of optimization isn't always necessary like with black-box functions that have no gradient or hessian. In those cases, the convenience of defining keyword-based parameters and easy switching between min/max can outweigh the mathematical perfection of array-based optimization.
+## Fundamentals?
+Lets be honest, there is good reason optimization typically uses arrays and always minimizes... it makes the math simple and efficient. For example, optimizing in a vector space allows the curvature to be represented in a Hessian matrix. However, this isn't always necessary like with black-box functions that have no gradient or hessian. In those cases, the convenience of defining keyword-based parameters and easy switching between min/max can outweigh the mathematical perfection of array-based optimization.
 
 ## Acknowledgments
 
