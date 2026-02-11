@@ -13,11 +13,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # This condition prevents duplicate test runs when a PR is merged
-    # (the push from merge already ran tests as a PR)
-    if: >
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'push' && !github.event.pull_request)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +38,9 @@ jobs:
     # 2. "release PR was merged -> create a release and tag on GitHub"
     #     - you can use the outputs of the release-please step to conditionally run other steps/jobs like building and publishing which should only run in state #2 (see the "build-and-publish" job below)
     
+    needs: test # only run after tests pass
     runs-on: ubuntu-latest
-    
+
     # Only run on direct pushes to main (never on PRs)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
