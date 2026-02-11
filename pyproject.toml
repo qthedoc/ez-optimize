@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 61", "setuptools-scm >= 8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -8,7 +8,7 @@ include = ["ez_optimize*"]
 
 [project]
 name = 'ez-optimize'
-version = "0.1.1"
+dynamic = ["version"]
 requires-python = ">=3.10"
 authors = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
 maintainers = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
@@ -42,13 +42,9 @@ dependencies = [
   'scipy>=1.15',
 ]
 
-
-
 [project.optional-dependencies]
-tests = [
+test = [
   'pytest',
-  'build',
-  'twine'
 ]
 
 [project.urls]
@@ -57,4 +53,7 @@ Repository = "https://github.com/qthedoc/ez-optimize"
 Issues = "https://github.com/qthedoc/ez-optimize/issues"
 "Say Thanks!" = "http://quinnmarsh.com"
 
+[tool.setuptools_scm]
+version_file = "src/ez_optimize/_version.py" # create version file on build and install
+local_scheme = "no-local-version"
 
