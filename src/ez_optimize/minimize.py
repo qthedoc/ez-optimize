@@ -17,6 +17,7 @@ def minimize(
     x_mode: Optional[Literal["array", "dict"]] = None,
     args: Optional[Tuple] = None,
     kwargs: Optional[Dict[str, Any]] = None,
+    callback: Optional[Callable] = None,
     **optimizer_kwargs,  # bounds, constraints, tol, options, etc. stored for later use
 ) -> EzOptimizeResult:
     """
@@ -52,6 +53,13 @@ def minimize(
         Additional keyword arguments to pass to the objective function.
         In 'dict' mode, if keys conflict with x0 keys, x0 values take precedence
         and a warning is issued.
+    callback : callable, optional
+        Optional function to be called after each iteration. Behavior depends on the callback signature:
+        - callback(intermediate_result): (1 param that is exactly `intermediate_result`)
+            - `intermediate_result` is an EzOptimizeResult object containing intermediate optimization results.
+        - callback(xk, intermediate_result): (2 or more params, any names)
+            - where xk is the current parameter vector (reconstructed to original structure). 
+            - `intermediate_result` is an EzOptimizeResult object containing intermediate optimization results.
     **optimizer_kwargs
         Additional keyword arguments passed to the optimizer.
 
@@ -79,6 +87,7 @@ def minimize(
         bounds=bounds,
         args=args,
         kwargs=kwargs,
+        callback=callback,
         **optimizer_kwargs
     )
     return problem.optimize()
