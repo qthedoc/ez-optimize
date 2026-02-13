@@ -90,5 +90,11 @@ Inspired by [better_optimize](https://github.com/jessegrabowski/better_optimize)
 
 Contributions Welcome! Report bugs, request features, or improve documentation via GitHub issues or pull requests.
 
-
-
+### Development Setup
+1. Clone the repo: `git clone https://github.com/qthedoc/ez-optimize.git`
+2. Navigate to the project directory: `cd ez-optimize`
+3. Create a virtual environment: `python -m venv .venv`
+4. Activate the virtual environment:
+   - On Windows: `.\.venv\Scripts\activate`
+   - On macOS/Linux: `source .venv/bin/activate`
+5. Install the package in editable mode with test dependencies: `pip install -e .[test]`

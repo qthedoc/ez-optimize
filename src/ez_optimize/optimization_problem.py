@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
+import inspect
 
 import numpy as np
 
@@ -32,6 +33,7 @@ class OptimizationProblem:
         x_mode: Optional[Literal["array", "dict"]] = None,
         args: Optional[Tuple] = None,
         kwargs: Optional[Dict[str, Any]] = None,
+        callback: Optional[Callable] = None,
         
         # fused_fun_map: Optional[Union[Literal["dict"], tuple[str, ...], Dict[str, str]]] = None,
         # jac: Optional[Callable] = None,
@@ -54,6 +56,7 @@ class OptimizationProblem:
         # Validate and store args and user_kwargs
         self.user_args = args if args is not None else ()
         self.user_kwargs = kwargs if kwargs is not None else {}
+        self.user_callback = callback
         
         # Validate args usage based on x_mode
         if self.x_mode == "dict" and len(self.user_args) > 0:
@@ -218,6 +221,10 @@ class OptimizationProblem:
                 "bounds": self.parent.bounds_flat,
             }
 
+            # Add callback if provided
+            if self.parent.user_callback is not None:
+                args["callback"] = self._wrap_callback()
+
             # Merge any extra kwargs
             args.update(self.parent.optimizer_kwargs)
 
@@ -226,11 +233,10 @@ class OptimizationProblem:
         def interpret_result(self, scipy_result: OptimizeResult) -> EzOptimizeResult:
             """Convert SciPy result into EasyOptimizeResult with restored structure."""
 
-            # result_dict = dict(scipy_result)
-
-            # Check success and warn if not successful
-            if not scipy_result.success:
-                warnings.warn(f"Optimization did not converge: {scipy_result.message}", RuntimeWarning)
+            # TODO: i think we need better handling of cases where optimization fails and intermediate results
+            # Check success and warn if not successful 
+            if scipy_result.get('success', None) is False:
+                warnings.warn(f"Optimization did not converge: {scipy_result.get('message', '')}", RuntimeWarning)
 
             return EzOptimizeResult(
                 scipy_result=scipy_result,
@@ -260,3 +266,37 @@ class OptimizationProblem:
             fun = wrap_negate_if_max(fun, self.parent.direction)
 
             return fun
+        
+        def _wrap_callback(self) -> Callable:
+            """
+            Wrap the user's callback function to handle parameter reconstruction and direction.
+            Preserve SciPy callback signature behavior (callback(intermediate_result) or callback(xk)).
+
+            SciPy callback behavior:
+            - if: there is is one arg and its called `intermediate_result`
+                scipy will pass an OptimizeResult object containing intermediate optimization results
+
+            - else: (if there are two or more args, or if there is one arg but it's not called `intermediate_result`)
+                scipy will pass the current parameter vector as the first argument, and optionally the OptimizeResult as a second argument (depending on the method and callback signature)
+            """
+            sig = inspect.signature(self.parent.user_callback)
+            params = list(sig.parameters.keys())
+            
+            if len(params) == 1 and params[0] == 'intermediate_result':
+                # Callback expects intermediate_result: OptimizeResult
+                def wrapped_callback(intermediate_result):
+                    ez_intermediate_result = self.interpret_result(intermediate_result) if intermediate_result is not None else None
+                    self.parent.user_callback(intermediate_result=ez_intermediate_result)
+                return wrapped_callback
+            else:
+                def wrapped_callback(xk, intermediate_result=None):
+                    x_reconstructed = self.parent.x_to_original(xk)
+
+                    # Reconstruct intermediate_result if user callback expects it
+                    ez_intermediate_result = self.interpret_result(intermediate_result) if intermediate_result is not None else None
+                    
+                    # Call user callback with reconstructed x and optionally intermediate result
+                    self.parent.user_callback(x_reconstructed, ez_intermediate_result)
+
+                return wrapped_callback
+

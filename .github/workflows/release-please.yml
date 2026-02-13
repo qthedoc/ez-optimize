@@ -32,17 +32,10 @@ jobs:
         run: pytest tests
 
   release-please:
-    # no one ever told me this about release-please so I will leave it here:
-    # release-please runs in one of two states:
-    # 1. "changes detected on main branch -> create a release PR with bumped version and changelog"
-    # 2. "release PR was merged -> create a release and tag on GitHub"
-    #     - you can use the outputs of the release-please step to conditionally run other steps/jobs like building and publishing which should only run in state #2 (see the "build-and-publish" job below)
-    
-    needs: test # only run after tests pass
-    runs-on: ubuntu-latest
-
+    needs: test
     # Only run on direct pushes to main (never on PRs)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -59,7 +52,6 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -95,7 +87,6 @@ jobs:
     environment: pypi
     permissions:
       id-token: write        # for trusted publishing
-
     steps:
       - name: Download built distributions
         uses: actions/download-artifact@v4
