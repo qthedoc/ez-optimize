@@ -5,11 +5,9 @@ import numpy as np
 
 from numpy.testing import assert_allclose
 
+from ez_optimize.constants import MINIMIZE_METHODS_NO_GRAD
 from ez_optimize.optimization_problem import OptimizationProblem
 from ez_optimize.utilities import EzOptimizeResult
-
-no_grad_methods = ["nelder-mead", "powell", "CG", "BFGS", "L-BFGS-B"]
-
 
 def rosen(x, a, b) -> float:
     """The Rosenbrock function"""
@@ -21,7 +19,7 @@ def rosen_2d_kw(x, y, a, b) -> float:
     return rosen(np.array([x, y]), a, b)
 
 
-@pytest.mark.parametrize("method", no_grad_methods, ids=no_grad_methods)
+@pytest.mark.parametrize("method", MINIMIZE_METHODS_NO_GRAD)
 def test_array_5d(method: str):
     x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
 
@@ -34,7 +32,7 @@ def test_array_5d(method: str):
     assert_allclose(res.fun, 0.0, atol=1e-8, rtol=1e-8)
 
 
-@pytest.mark.parametrize("method", no_grad_methods, ids=no_grad_methods)
+@pytest.mark.parametrize("method", MINIMIZE_METHODS_NO_GRAD)
 def test_kw_2d(method: str):
     x0 = {'x': 1.3, 'y': 0.7}
 
@@ -48,7 +46,7 @@ def test_kw_2d(method: str):
     assert isinstance(res.x, dict)
     assert_allclose(list(res.x.values()), np.ones(2), atol=1e-4, rtol=1e-4)
 
-@pytest.mark.parametrize("method", no_grad_methods, ids=no_grad_methods)
+@pytest.mark.parametrize("method", MINIMIZE_METHODS_NO_GRAD)
 def test_kw_array(method: str):
     x0 = {'x':np.array([1.3, 0.7, 0.8, 1.9, 1.2])}
 
