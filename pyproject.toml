@@ -12,7 +12,7 @@ dynamic = ["version"]
 requires-python = ">=3.10"
 authors = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
 maintainers = [{ name = "Quinn Marsh", email = "quinnmarsh@hotmail.com" }]
-description = "A more intuitive front-end for scipy.optimize with keyword params x0={'x': 1, 'y': 2} and more"
+description = "Run scipy.optimize with keyword params, e.g. x0={'x': 1, 'y': 2}, and other QoL improvements"
 readme = "README.md"
 license = {text = "MIT License"}
 keywords = [
