@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1](https://github.com/qthedoc/ez-optimize/compare/v0.3.0...v0.3.1) (2026-02-16)
+
+
+### Documentation
+
+* update ([463c0eb](https://github.com/qthedoc/ez-optimize/commit/463c0eb61ff88cc2cc0efdc959e0708be35cd926))
+* update ([0da2eaf](https://github.com/qthedoc/ez-optimize/commit/0da2eafcb6b862cd9e28fa6b28efc04d1b4f80f1))
+* update ([a9afc04](https://github.com/qthedoc/ez-optimize/commit/a9afc04d086454025e43902736acec842c3b524e))
+
 ## [0.3.0](https://github.com/qthedoc/ez-optimize/compare/v0.2.0...v0.3.0) (2026-02-13)
 
 
