@@ -79,25 +79,8 @@ Optimal x: {'x': 1.0}
 Optimal value: 0.0
 ```
 
-# Define the optimization problem
-problem = OptimizationProblem(objective, x0, method='SLSQP', bounds=bounds)
-
-# Run SciPy method directly, passing in the arguments prepared by the OptimizationProblem
-scipy_result = scipy_minimize(**problem.scipy.get_minimize_args())
-
-# Use the OptimizationProblem to interpret the result back into our structured format
-result = problem.scipy.interpret_result(scipy_result)
-
-print(f"Optimal parameters: {result.x}")
-print(f"Optimal value: {result.fun}")
-```
-```
-Optimal parameters: {'a': 0.0, 'b': 0.0, 'c': 0.0}
-Optimal value: 0.0
-```
-
-## Fundamentals?
-Lets be honest, there is good reason optimization typically uses arrays and always minimizes... it makes the math simple and efficient. For example, optimizing in a vector space allows the curvature to be represented in a Hessian matrix. However, this isn't always necessary like with black-box functions that have no gradient or hessian. In those cases, the convenience of defining keyword-based parameters and easy switching between min/max can outweigh the mathematical perfection of array-based optimization.
+## The Array in the Room
+Lets be honest, there is good reason optimization typically uses arrays and always minimizes... it makes the math simple and efficient. For example, optimizing in a vector space allows the curvature to be represented in a Hessian matrix. However, this isn't always necessary like with black-box functions that have no defined gradient or hessian. In those cases, the convenience of defining keyword-based parameters can outweigh the mathematical perfection of array-based optimization.
 
 ## Acknowledgments
 
@@ -105,7 +88,7 @@ Inspired by [better_optimize](https://github.com/jessegrabowski/better_optimize)
 
 ## Contributing
 
-Contributions Welcome! Report bugs, request features, or improve documentation via GitHub issues or pull requests.
+Would love any feedback and contributions! Report bugs, request features, or improve documentation via GitHub issues or pull requests.
 
 ### Development Setup
 1. Clone the repo: `git clone https://github.com/qthedoc/ez-optimize.git`
