@@ -13,10 +13,10 @@
 
 ## Why ez-optimize?
 
-### 1. Keyword-Based Optimization (e.g.: `x0={'x': 1, 'y': 2}`)
+### Keyword-Based Optimization (e.g.: `x0={'x': 1, 'y': 2}`)
 By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more intuitive to use named parameters `x0={'x': 1, 'y': 2}`. `ez-optimize` allows you to define parameters as dictionaries. Then under the hood, `ez-optimize` automatically flattens parameters (and wraps your function) for SciPy while restoring the original structure in results. Keyword-based optimization is especially useful in physical simulations where parameters have meaningful names representing physical quantities.
 
-### 2. Switch to Maximize with `direction='max'`
+### Switch to Maximize with `direction='max'`
 By default, optimization minimizes the objective function. To maximize, you typically need to write a negated wrapper around your function. With `ez-optimize`, simply set `direction='max'` and the library will automatically handle negation under the hood.
 
 ## Quick Start
@@ -51,11 +51,6 @@ Optimal value: 0.0
 ### Example 2: Keyword-Based Bounds
 
 ```python
-from ez_optimize import OptimizationProblem
-from scipy.optimize import minimize as scipy_minimize
-
-def rosenbrock_2d(x, y, a=1, b=100):
-    return (a - x)**2 + b * (y - x**2)**2
 
 x0 = {'x': 1.3, 'y': 0.7}
 bounds = {'x': (0, 2), 'y': (0, 2)}
