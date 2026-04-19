@@ -20,7 +20,7 @@ def test_array_mode_with_args():
     
     assert result.success
     np.testing.assert_allclose(result.x, [2.0, 3.0], atol=1e-5)
-    assert result.fun < 1e-8
+    assert result.func < 1e-8
 
 
 def test_array_mode_with_kwargs():
@@ -38,7 +38,7 @@ def test_array_mode_with_kwargs():
     
     assert result.success
     np.testing.assert_allclose(result.x, [2.0, 3.0], atol=1e-5)
-    np.testing.assert_allclose(result.fun, 10.0, atol=1e-8)
+    np.testing.assert_allclose(result.func, 10.0, atol=1e-8)
 
 
 def test_dict_mode_with_kwargs_no_conflict():
@@ -51,7 +51,7 @@ def test_dict_mode_with_kwargs_no_conflict():
         fun=objective_dict_no_conflict,
         x0={'a': 0.0, 'b': 0.0},
         method='BFGS',
-        x_mode='dict',
+        var_mode='dict',
         kwargs={'multiplier': 2.5}
     )
     
@@ -59,7 +59,7 @@ def test_dict_mode_with_kwargs_no_conflict():
     assert isinstance(result.x, dict)
     np.testing.assert_allclose(result.x['a'], 2.0, atol=1e-5)
     np.testing.assert_allclose(result.x['b'], 3.0, atol=1e-5)
-    assert result.fun < 1e-8
+    assert result.func < 1e-8
 
 
 def test_dict_mode_with_conflicting_kwargs_warns():
@@ -74,20 +74,20 @@ def test_dict_mode_with_conflicting_kwargs_warns():
             fun=objective_dict_conflict,
             x0={'a': 0.0, 'b': 0.0},
             method='BFGS',
-            x_mode='dict',
+            var_mode='dict',
             kwargs={'a': 100.0}  # 'a' conflicts with x0
         )
         
         # Check that a warning was issued
         assert len(w) >= 1
-        assert "Conflicting parameter names" in str(w[0].message)
+        assert "Conflicting variable names" in str(w[0].message)
     
     assert result.success
     assert isinstance(result.x, dict)
     # x0 values should take precedence, so we should converge to a=5, b=7
     np.testing.assert_allclose(result.x['a'], 5.0, atol=1e-5)
     np.testing.assert_allclose(result.x['b'], 7.0, atol=1e-5)
-    assert result.fun < 1e-8
+    assert result.func < 1e-8
 
 
 def test_dict_mode_with_args_raises_error():
@@ -101,7 +101,7 @@ def test_dict_mode_with_args_raises_error():
             fun=objective_dict,
             x0={'a': 0.0, 'b': 0.0},
             method='BFGS',
-            x_mode='dict',
+            var_mode='dict',
             args=(2.0,)  # This should fail
         )
 
@@ -122,4 +122,4 @@ def test_array_mode_with_both_args_and_kwargs():
     
     assert result.success
     np.testing.assert_allclose(result.x, [2.0, 3.0], atol=1e-5)
-    np.testing.assert_allclose(result.fun, 5.0, atol=1e-8)
+    np.testing.assert_allclose(result.func, 5.0, atol=1e-8)

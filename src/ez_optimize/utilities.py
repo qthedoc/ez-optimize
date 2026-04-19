@@ -71,7 +71,7 @@ def call_with_kwargs(func: Callable, kwargs: Dict[str, Any]) -> Any:
 
 def wrap_reconstruct_args(
     fun: Optional[Callable],
-    x_mode: str,
+    var_mode: str,
     x_to_original: Callable[[np.ndarray], Any],
     pos_arg_names: list[str] = None,               # e.g. ['p'] for hessp
     user_args: tuple = (),
@@ -80,12 +80,12 @@ def wrap_reconstruct_args(
     """
     Returns a wrapped version of a function that:
     - take flat x (and optionally other args like p) for SciPy compatibility
-    - reconstruct original parameter structure
+    - reconstruct original variable structure
     - call user function with additional args/kwargs
 
     Args:
         fun: The user-provided callable (objective, jac, hess, hessp, ...)
-        x_mode: "array" or "dict"
+        var_mode: "array" or "dict"
         x_to_original: Function that turns flat array → original x (dict or array)
         pos_arg_names: Names to map positional args to (e.g. ['p'] for hessp)
         user_args: Additional positional arguments to pass to the user function
@@ -117,14 +117,14 @@ def wrap_reconstruct_args(
         """
         Wrapped function that reconstructs x and calls the user function with appropriate args/kwargs.
         Args:
-            x_flat: The flat array of parameters from the optimizer.
+            x_flat: The flat array of variables from the optimizer.
             *extra_pos_args: Additional positional arguments (e.g. scipy.optimize calls hessp(x, p), p for hessp).
         """
-        # Reconstruct original parameters
+        # Reconstruct original variables
         x = x_to_original(x_flat)
 
         # Prepare call arguments
-        if x_mode == "dict":
+        if var_mode == "dict":
             # Map positional extra args (e.g. p for hessp)
             extra_args_as_kwargs = {}
             for name, value in zip(pos_arg_names, extra_pos_args):
@@ -169,34 +169,45 @@ class EzOptimizeResult():
     def __init__(
             self,
             scipy_result: ScipyOptimizeResult,
-            x_mode: str = 'array', 
+            var_mode: str = 'array', 
             x_map: Optional[list[str]] = None, 
             x_to_original: Optional[Callable[[np.ndarray], Any]] = None,
             direction: str = 'min',
         ):
         # super().__init__(**scipy_result.__dict__)
         self.scipy_result = scipy_result
-        self._x_mode = x_mode  # Store mode ('array' or 'dict')
+        self._var_mode = var_mode  # Store mode ('array' or 'dict')
         self._x_map = x_map  # Store sorted keys from x0 dict
         self._x_to_original = x_to_original
         self._direction = direction
-        self.x_flat = scipy_result.x  # flat optimized parameters
+        self.x_flat = scipy_result.x  # flat optimized variables
 
         # Process: Restore x to original structure
-        if self._x_to_original:
-            self.x = self._x_to_original(scipy_result.x)
-        else:
-            self.x = scipy_result.x
+        if hasattr(self.scipy_result, 'x') and self.scipy_result.x is not None:
+            if self._x_to_original:
+                self.x = self._x_to_original(self.scipy_result.x)
+            else:
+                self.x = self.scipy_result.x
+
 
         # Process: Correct sign for maximization
-        self.fun = scipy_result.fun
-        if self._direction == "max" and self.fun is not None:
-            self.fun = -self.fun
+        if hasattr(self.scipy_result, 'fun') and self.scipy_result.fun is not None:
+            self.func = self.scipy_result.fun
+            if self._direction == "max" and self.func is not None:
+                self.func = -self.func
         # Similarly for jac if present: self.jac = -scipy_result.jac if applicable
     
         # Attach other attributes from scipy_result
-        for attr in dir(scipy_result):
+        for attr in dir(self.scipy_result):
             if not attr.startswith('_') and attr not in ('x', 'fun', 'jac'):  # Avoid overwriting processed ones
-                setattr(self, attr, getattr(scipy_result, attr))
+                setattr(self, attr, getattr(self.scipy_result, attr))
+
+    @property
+    def fun(self):
+        """Return the objective function value, corrected for maximization if needed."""
+        if hasattr(self, 'func'):
+            return self.func
+        else:
+            return None
 
     
