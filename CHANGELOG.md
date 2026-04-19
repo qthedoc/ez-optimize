@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/qthedoc/ez-optimize/compare/v0.3.1...v0.4.0) (2026-04-19)
+
+
+### Features
+
+* dual_annealing ([a76974e](https://github.com/qthedoc/ez-optimize/commit/a76974e166200685ccd8e8b34e6f933c8e20ab54))
+
+
+### Bug Fixes
+
+* handles 'bound only' problems (no x0) ([86335c6](https://github.com/qthedoc/ez-optimize/commit/86335c65f191b386a460229c443a3745cdb5693f))
+
 ## [0.3.1](https://github.com/qthedoc/ez-optimize/compare/v0.3.0...v0.3.1) (2026-02-16)
 
 
