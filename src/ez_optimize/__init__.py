@@ -1,6 +1,8 @@
 import logging
 
 from .minimize import minimize
+from .dual_annealing import dual_annealing
+from .differential_evolution import differential_evolution
 from .optimization_problem import OptimizationProblem
 from ._version import __version__
 
@@ -13,4 +15,4 @@ if not logging.root.handlers:
         _log.addHandler(handler)
 
 # __version__ = get_versions()["version"]
-__all__ = ["minimize", "OptimizationProblem"]
+__all__ = ["minimize", "dual_annealing", "differential_evolution", "OptimizationProblem"]

@@ -362,7 +362,10 @@ class OptimizationProblem:
                     x_reconstructed = self.parent.x_to_original(xk)
 
                     # Reconstruct intermediate_result if user callback expects it
-                    ez_intermediate_result = self.interpret_result(intermediate_result) if intermediate_result is not None else None
+                    if isinstance(intermediate_result, OptimizeResult):
+                        ez_intermediate_result = self.interpret_result(intermediate_result)
+                    else:
+                        ez_intermediate_result = intermediate_result
                     
                     # Call user callback with reconstructed x and optionally intermediate result
                     self.parent.user_callback(x_reconstructed, ez_intermediate_result)

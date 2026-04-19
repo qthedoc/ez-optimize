@@ -188,7 +188,7 @@ def dual_annealing(
         callback=problem.scipy.get_callback(),
         x0=problem.scipy.get_x0(),
 
-        # Pass args that aren't wrapping
+        # Pass args that aren't wrapped
         maxiter=maxiter,
         minimizer_kwargs=minimizer_kwargs,
         initial_temp=initial_temp,

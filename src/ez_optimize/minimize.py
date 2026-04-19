@@ -273,7 +273,7 @@ def minimize(
         bounds=problem.scipy.get_bounds(),
         callback=problem.scipy.get_callback(),
 
-        # Pass args that aren't wrapping
+        # Pass args that aren't wrapped
         method=method,
         jac=jac,
         hess=hess,
