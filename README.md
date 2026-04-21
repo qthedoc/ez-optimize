@@ -83,7 +83,8 @@ Inspired by [better_optimize](https://github.com/jessegrabowski/better_optimize)
 
 ## Contributing
 
-Would love any feedback and contributions! Report bugs, request features, or improve documentation via GitHub issues or pull requests.
+Would love any feedback and contributions. Report bugs, request features, or improve documentation via GitHub issues or pull requests.
+AI contributions are welcome, but every line must be reviewed, understood, and owned by a human.
 
 ### Development Setup
 1. Clone the repo: `git clone https://github.com/qthedoc/ez-optimize.git`
