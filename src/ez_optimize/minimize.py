@@ -268,7 +268,7 @@ def minimize(
     # Run SciPy
     scipy_result = scipy_minimize(
         # Pass wrapped args
-        fun=problem.scipy.minimize.func(),
+        fun=problem.scipy.minimize.fun(),
         x0=problem.scipy.minimize.x0(),
         bounds=problem.scipy.minimize.bounds(),
         callback=problem.scipy.minimize.callback(),
