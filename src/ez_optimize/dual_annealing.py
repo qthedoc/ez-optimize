@@ -1,4 +1,5 @@
 from __future__ import annotations
+import warnings
 
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 
@@ -183,12 +184,12 @@ def dual_annealing(
     # Run SciPy
     scipy_result = scipy_dual_annealing(
         # Pass wrapped args
-        func=problem.scipy.get_func(),
-        bounds=problem.scipy.get_bounds(),
-        callback=problem.scipy.get_callback(),
-        x0=problem.scipy.get_x0(),
+        func=problem.scipy.dual_annealing.func(),
+        bounds=problem.scipy.dual_annealing.bounds(),
+        callback=problem.scipy.dual_annealing.callback(),
+        x0=problem.scipy.dual_annealing.x0(),
 
-        # Pass args that aren't wrapping
+        # Pass args that aren't wrapped
         maxiter=maxiter,
         minimizer_kwargs=minimizer_kwargs,
         initial_temp=initial_temp,
@@ -200,6 +201,4 @@ def dual_annealing(
         no_local_search=no_local_search,
     )
 
-    return problem.scipy.interpret_result(scipy_result)
-
-    
+    return problem.scipy.dual_annealing.interpret_result(scipy_result)

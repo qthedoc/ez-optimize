@@ -40,7 +40,7 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v4 # switch to v5 for node24 when it comes out
         id: release
         with:
           config-file: release-please-config.json

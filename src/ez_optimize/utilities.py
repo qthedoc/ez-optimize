@@ -70,7 +70,7 @@ def call_with_kwargs(func: Callable, kwargs: Dict[str, Any]) -> Any:
         return func(**matched_kwargs)
 
 def wrap_reconstruct_args(
-    fun: Optional[Callable],
+    func: Optional[Callable],
     var_mode: str,
     x_to_original: Callable[[np.ndarray], Any],
     pos_arg_names: list[str] = None,               # e.g. ['p'] for hessp
@@ -107,7 +107,7 @@ def wrap_reconstruct_args(
         ...
     ]
     """
-    if fun is None:
+    if func is None:
         return None
 
     pos_arg_names = pos_arg_names or []
@@ -133,11 +133,11 @@ def wrap_reconstruct_args(
                 extra_args_as_kwargs[name] = value
 
             # Call the function
-            result = call_with_kwargs(fun, {**user_kwargs, **x, **extra_args_as_kwargs})
+            result = call_with_kwargs(func, {**user_kwargs, **x, **extra_args_as_kwargs})
         
         else:
             # Call the function
-            result = fun(x, *extra_pos_args, *user_args, **user_kwargs)
+            result = func(x, *extra_pos_args, *user_args, **user_kwargs)
 
         return result
 
