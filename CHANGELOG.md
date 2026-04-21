@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/qthedoc/ez-optimize/compare/v0.4.0...v0.5.0) (2026-04-21)
+
+
+### Features
+
+* differential_evolution ([5b8de9d](https://github.com/qthedoc/ez-optimize/commit/5b8de9dcc1a4bd25e1bee623cb93854fe67c22df))
+* global methods ([f63d6db](https://github.com/qthedoc/ez-optimize/commit/f63d6dbe09d2ee19a8cb3430cfde40c797e29b09))
+
 ## [0.4.0](https://github.com/qthedoc/ez-optimize/compare/v0.3.1...v0.4.0) (2026-04-19)
 
 
