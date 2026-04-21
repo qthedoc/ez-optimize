@@ -11,10 +11,16 @@
 
 `ez-optimize` is your Ironman suit for optimization.
 
+## `ez-optimize` currently provides:
+- drop-in wrappers for `minimize`, `basinhopping`, `differential_evolution`, `dual_annealing`, `shgo`, and `direct` from `scipy.optimize` that support keyword-based versions of 
+- OptimizationProblem class for use with any optimizer of your choice
+
 ## Why ez-optimize?
 
 ### Keyword-Based Optimization (e.g.: `x0={'x': 1, 'y': 2}`)
-By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more intuitive to use named parameters `x0={'x': 1, 'y': 2}`. `ez-optimize` allows you to define parameters as dictionaries. Then under the hood, `ez-optimize` automatically flattens parameters (and wraps your function) for SciPy while restoring the original structure in results. Keyword-based optimization is especially useful in physical simulations where parameters have meaningful names representing physical quantities.
+By default, optimization uses arrays `x0=[1, 2]`. However sometimes it's more intuitive to use named parameters `x0={'x': 1, 'y': 2}`. `ez-optimize` allows you to define parameters as dictionaries. For example `x0` and `bounds` can be defined as dictionaries with parameter names as keys, and your function can accept matching kwargs.
+
+Then under the hood, `ez-optimize` automatically flattens parameters (and wraps your function) for SciPy while restoring the original structure in results. Keyword-based optimization is especially useful in physical simulations where parameters have meaningful names representing physical quantities.
 
 ### Switch to Maximize with `direction='max'`
 By default, optimization minimizes the objective function. To maximize, you typically need to write a negated wrapper around your function. With `ez-optimize`, simply set `direction='max'` and the library will automatically handle negation under the hood.
