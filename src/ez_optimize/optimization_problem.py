@@ -36,7 +36,7 @@ class OptimizationProblem:
         **optimizer_kwargs,  # bounds, constraints, tol, options, etc. stored for later use
     ):
         # Detect and prepare variable structure: flatten x0/bounds, set x_map, x_keys, x_to_original
-        self._prepare_variable_structure(var_mode, x0, bounds)
+        self._prepare_variable_layout(var_mode, x0, bounds)
 
         self.method = self._prepare_method(method)
 
@@ -73,23 +73,28 @@ class OptimizationProblem:
 
     @property
     def scipy(self):
-        """SciPy-specific interface."""
-        return OptimizationProblem.SciPyInterface(self)
+        """SciPy optimize sub-namespace: one interface per scipy.optimize function."""
+        return OptimizationProblem._Scipy(self)
 
     def optimize(self) -> EzOptimizeResult:
         """
         Convenience: run optimization using SciPy backend and return interpreted result.
         """
-
-        args = self.scipy.get_minimize_args()
-        res = scipy_minimize(**args)
-        return self.scipy.interpret_result(res)
+        res = scipy_minimize(
+            fun=self.scipy.minimize.func(),
+            x0=self.scipy.minimize.x0(),
+            method=self.method,
+            bounds=self.scipy.minimize.bounds(),
+            callback=self.scipy.minimize.callback(),
+            **self.optimizer_kwargs,
+        )
+        return self.scipy.minimize.interpret_result(res)
 
     # ────────────────────────────────────────────────────────────────
     # Internal helpers – shared across backends
     # ────────────────────────────────────────────────────────────────
 
-    def _prepare_variable_structure(self, var_mode, x0, bounds):
+    def _prepare_variable_layout(self, var_mode, x0, bounds):
         """
         Single entry point for all variable structure setup.
         Sets x0_flat, bounds_flat, x_map, x_keys, and x_to_original.
@@ -98,9 +103,9 @@ class OptimizationProblem:
         self.var_mode = self._detect_mode(var_mode, x0, bounds)
 
         if self.var_mode == "array":
-            self._prepare_variable_structure_array(x0, bounds)
+            self._prepare_variable_layout_array(x0, bounds)
         else:
-            self._prepare_variable_structure_dict(x0, bounds)
+            self._prepare_variable_layout_dict(x0, bounds)
 
     def _detect_mode(self, var_mode: Optional[str], x0, bounds) -> str:
         """Detect variable mode (array vs dict) based on var_mode argument and types of x0 and bounds."""
@@ -126,11 +131,10 @@ class OptimizationProblem:
 
         # Default if nothing provided
         return "array"
-    
 
-    def _prepare_variable_structure_array(self, x0, bounds):
+    def _prepare_variable_layout_array(self, x0, bounds):
         self.x_keys = None
-        self.x_to_original = lambda x: x.reshape(self.x_map)
+        self.x_to_original = lambda x: np.asarray(x).reshape(self.x_map)
 
         # Flatten x0 and derive x_map from it
         if x0 is not None:
@@ -161,7 +165,7 @@ class OptimizationProblem:
 
         self.bounds_flat = bounds
 
-    def _prepare_variable_structure_dict(self, x0, bounds):
+    def _prepare_variable_layout_dict(self, x0, bounds):
         self.x_to_original = self._reconstruct_dict
 
         # Build x_keys and x_map from x0
@@ -248,127 +252,224 @@ class OptimizationProblem:
             raise ValueError(f"Unsupported method '{method}'. Supported: {', '.join(MINIMIZE_METHODS)}")
         return method
 
-    class SciPyInterface:
+    class _Scipy:
+        """One-to-one namespace with scipy.optimize, providing a per-function interface."""
+
+        def __init__(self, parent: "OptimizationProblem"):
+            self._parent = parent
+
+        @property
+        def minimize(self):
+            return OptimizationProblem._MinimizeInterface(self._parent)
+
+        @property
+        def differential_evolution(self):
+            return OptimizationProblem._DifferentialEvolutionInterface(self._parent)
+
+        @property
+        def dual_annealing(self):
+            return OptimizationProblem._DualAnnealingInterface(self._parent)
+
+        @property
+        def shgo(self):
+            return OptimizationProblem._ShgoInterface(self._parent)
+
+        @property
+        def direct(self):
+            return OptimizationProblem._DirectInterface(self._parent)
+
+        @property
+        def basinhopping(self):
+            return OptimizationProblem._BasinhoppingInterface(self._parent)
+
+
+    class _ScipyMethodBase:
         """
-        Everything related to scipy.optimize.minimize is isolated here.
+        Shared implementation for all scipy.optimize method interfaces.
+
+        Subclasses must implement _wrap_callback() to provide the correct
+        scipy callback signature for their specific method.
         """
 
         def __init__(self, parent: "OptimizationProblem"):
-            self.parent = parent
+            self._parent = parent
 
-        def get_func(self) -> Callable:
-            """Return a scipy-ready objective function, with argument reconstruction and direction handling."""
-            return self._wrap_func()
-        
-        def get_x0(self) -> np.ndarray:
+        def func(self) -> Callable:
+            """Return a scipy-ready objective function with argument reconstruction and direction handling."""
+            fn = wrap_reconstruct_args(
+                func=self._parent.user_func,
+                var_mode=self._parent.var_mode,
+                x_to_original=self._parent.x_to_original,
+                user_args=self._parent.user_args,
+                user_kwargs=self._parent.user_kwargs,
+            )
+            return wrap_negate_if_max(fn, self._parent.direction)
+
+        def x0(self) -> Optional[np.ndarray]:
             """Return the flattened initial guess."""
-            return self.parent.x0_flat
-        
-        def get_bounds(self) -> Optional[List[Tuple[float, float]]]:
+            return self._parent.x0_flat
+
+        def bounds(self) -> Optional[List[Tuple[float, float]]]:
             """Return the flattened bounds."""
-            return self.parent.bounds_flat
+            return self._parent.bounds_flat
 
-        def get_callback(self) -> Optional[Callable]:
-            """Return a scipy-ready callback function, with argument reconstruction and direction handling."""
-            if self.parent.user_callback is not None:
-                return self._wrap_callback()
-            return None
-        
-
-        def get_minimize_args(
-            self,
-        ) -> dict:
-            """Build arguments for scipy.optimize.minimize."""
-
-            # Validate method
-            method = self.parent.method
-            if method is None or method not in MINIMIZE_METHODS:
-                raise ValueError(f"Unsupported method '{method}'. Supported: {', '.join(MINIMIZE_METHODS)}")
-
-            # Core arguments
-            args = {
-                "fun": self.get_func(),
-                "x0": self.get_x0(),
-                "method": method,
-                "bounds": self.get_bounds(),
-                "callback": self.get_callback(),
-            }
-
-            # Merge any extra kwargs
-            args.update(self.parent.optimizer_kwargs)
-
-            return args
+        def callback(self) -> Optional[Callable]:
+            """Return a scipy-ready callback or None."""
+            if self._parent.user_callback is None:
+                return None
+            return self._wrap_callback()
 
         def interpret_result(self, scipy_result: OptimizeResult) -> EzOptimizeResult:
-            """Convert SciPy result into EasyOptimizeResult with restored structure."""
-
+            """Convert a SciPy OptimizeResult into an EzOptimizeResult."""
             # TODO: i think we need better handling of cases where optimization fails and intermediate results
             # Check success and warn if not successful 
             if scipy_result.get('success', None) is False:
-                warnings.warn(f"Optimization did not converge: {scipy_result.get('message', '')}", RuntimeWarning)
-
+                warnings.warn(
+                    f"Optimization did not converge: {scipy_result.get('message', '')}",
+                    RuntimeWarning,
+                )
             return EzOptimizeResult(
                 scipy_result=scipy_result,
-                var_mode=self.parent.var_mode,
-                x_map=self.parent.x_map,
-                x_to_original=self.parent.x_to_original,
-                direction=self.parent.direction,
-            )
-        
-        # ─── SciPy-specific wrappers ────────────────────────────────────────
-
-        def _wrap_func(self) -> Callable:
-            """
-            Wrap the user's objective function, return a scipy-ready function
-            """
-            fun = self.parent.user_func
-
-            # Argument transformation and wrapping for SciPy
-            fun = wrap_reconstruct_args(
-                fun=fun,
-                var_mode=self.parent.var_mode,
-                x_to_original=self.parent.x_to_original,
-                user_args=self.parent.user_args,
-                user_kwargs=self.parent.user_kwargs,
+                var_mode=self._parent.var_mode,
+                x_map=self._parent.x_map,
+                x_to_original=self._parent.x_to_original,
+                direction=self._parent.direction,
             )
 
-            fun = wrap_negate_if_max(fun, self.parent.direction)
-
-            return fun
-        
         def _wrap_callback(self) -> Callable:
-            """
-            Wrap the user's callback function to handle variable reconstruction and direction.
-            Preserve SciPy callback signature behavior (callback(intermediate_result) or callback(xk)).
+            raise NotImplementedError(f"{type(self).__name__} must implement _wrap_callback()")
 
-            SciPy callback behavior:
-            - if: there is is one arg and its called `intermediate_result`
-                scipy will pass an OptimizeResult object containing intermediate optimization results
 
-            - else: (if there are two or more args, or if there is one arg but it's not called `intermediate_result`)
-                scipy will pass the current parameter vector as the first argument, and optionally the OptimizeResult as a second argument (depending on the method and callback signature)
-            """
-            sig = inspect.signature(self.parent.user_callback)
+    class _MinimizeInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.minimize.
+
+        Scipy minimize callback behavior:
+        - callback(intermediate_result): if the single param is named exactly
+          'intermediate_result', scipy passes an OptimizeResult object.
+        - callback(xk): scipy passes the current parameter vector.
+        - callback(xk, intermediate_result=None): trust-constr passes both.
+
+        Introspection is used to select the correct path.
+        """
+        def fun(self) -> Callable:
+            """Alias for func() to match scipy.optimize.minimize's expected argument name."""
+            return self.func()
+
+        def _wrap_callback(self) -> Callable:
+            sig = inspect.signature(self._parent.user_callback)
             params = list(sig.parameters.keys())
-            
+
             if len(params) == 1 and params[0] == 'intermediate_result':
-                # Callback expects intermediate_result: OptimizeResult
-                def wrapped_callback(intermediate_result):
-                    ez_intermediate_result = self.interpret_result(intermediate_result) if intermediate_result is not None else None
-                    self.parent.user_callback(intermediate_result=ez_intermediate_result)
-                return wrapped_callback
+                def wrapped(intermediate_result):
+                    ez = self.interpret_result(intermediate_result) if intermediate_result is not None else None
+                    self._parent.user_callback(intermediate_result=ez)
+                return wrapped
             else:
-                def wrapped_callback(xk, intermediate_result=None):
-                    x_reconstructed = self.parent.x_to_original(xk)
-
-                    # Reconstruct intermediate_result if user callback expects it
+                def wrapped(xk, intermediate_result=None):
+                    x_reconstructed = self._parent.x_to_original(xk)
                     if isinstance(intermediate_result, OptimizeResult):
-                        ez_intermediate_result = self.interpret_result(intermediate_result)
+                        ez_intermediate = self.interpret_result(intermediate_result)
                     else:
-                        ez_intermediate_result = intermediate_result
-                    
-                    # Call user callback with reconstructed x and optionally intermediate result
-                    self.parent.user_callback(x_reconstructed, ez_intermediate_result)
+                        ez_intermediate = intermediate_result
+                    self._parent.user_callback(x_reconstructed, ez_intermediate)
+                return wrapped
 
-                return wrapped_callback
+
+    class _DifferentialEvolutionInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.differential_evolution.
+
+        Scipy DE callback signatures:
+        - callback(intermediate_result: OptimizeResult): if param is named 'intermediate_result'.
+        - callback(x, convergence=val): x is the current best vector,
+          convergence is the fractional population convergence value.
+        """
+
+        def _wrap_callback(self) -> Callable:
+            sig = inspect.signature(self._parent.user_callback)
+            params = list(sig.parameters.keys())
+
+            if len(params) == 1 and params[0] == 'intermediate_result':
+                def wrapped(intermediate_result):
+                    ez = self.interpret_result(intermediate_result) if intermediate_result is not None else None
+                    self._parent.user_callback(intermediate_result=ez)
+                return wrapped
+            else:
+                def wrapped(x, convergence=None):
+                    x_reconstructed = self._parent.x_to_original(x)
+                    self._parent.user_callback(x_reconstructed, convergence)
+                return wrapped
+
+
+    class _DualAnnealingInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.dual_annealing.
+
+        Scipy dual_annealing callback signature:
+        - callback(x, f, context): x is the parameter vector at the latest minimum,
+          f is the function value, context is 0 (annealing), 1 (local search),
+          or 2 (dual annealing).
+
+        f is un-negated before being passed to the user callback when direction='max'.
+        """
+
+        def _wrap_callback(self) -> Callable:
+            def wrapped(x, f, context):
+                x_reconstructed = self._parent.x_to_original(x)
+                if self._parent.direction == "max":
+                    f = -f
+                return self._parent.user_callback(x_reconstructed, f, context)
+            return wrapped
+
+
+    class _ShgoInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.shgo.
+
+        Scipy shgo callback signature:
+        - callback(xk): xk is the current parameter vector.
+        """
+
+        def _wrap_callback(self) -> Callable:
+            def wrapped(xk):
+                x_reconstructed = self._parent.x_to_original(np.asarray(xk))
+                return self._parent.user_callback(x_reconstructed)
+            return wrapped
+
+
+    class _DirectInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.direct.
+
+        Scipy direct callback signature:
+        - callback(xk): xk is the current parameter vector.
+        """
+
+        def _wrap_callback(self) -> Callable:
+            def wrapped(xk):
+                x_reconstructed = self._parent.x_to_original(xk)
+                return self._parent.user_callback(x_reconstructed)
+            return wrapped
+
+
+    class _BasinhoppingInterface(_ScipyMethodBase):
+        """
+        Interface for scipy.optimize.basinhopping.
+
+        Scipy basinhopping callback signature:
+        - callback(x, f, accept): x is the current parameter vector,
+          f is the function value, accept is True/False for whether the step was accepted.
+
+        f is un-negated before being passed to the user callback when direction='max'.
+        """
+
+        def _wrap_callback(self) -> Callable:
+            def wrapped(x, f, accept):
+                x_reconstructed = self._parent.x_to_original(x)
+                if self._parent.direction == "max":
+                    f = -f
+                return self._parent.user_callback(x_reconstructed, f, accept)
+            return wrapped
+        
 

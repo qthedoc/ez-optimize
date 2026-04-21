@@ -244,10 +244,10 @@ def differential_evolution(
     # Run SciPy
     scipy_result = scipy_differential_evolution(
         # Pass wrapped args
-        func=problem.scipy.get_func(),
-        bounds=problem.scipy.get_bounds(),
-        callback=problem.scipy.get_callback(),
-        x0=problem.scipy.get_x0(),
+        func=problem.scipy.differential_evolution.func(),
+        bounds=problem.scipy.differential_evolution.bounds(),
+        callback=problem.scipy.differential_evolution.callback(),
+        x0=problem.scipy.differential_evolution.x0(),
 
         # Pass args that aren't wrapped
         strategy=strategy,
@@ -268,4 +268,4 @@ def differential_evolution(
         vectorized=vectorized,
     )
 
-    return problem.scipy.interpret_result(scipy_result)
+    return problem.scipy.differential_evolution.interpret_result(scipy_result)

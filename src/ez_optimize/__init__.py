@@ -6,7 +6,6 @@ from .differential_evolution import differential_evolution
 from .basinhopping import basinhopping
 from .shgo import shgo
 from .direct import direct
-from .brute import brute
 from .optimization_problem import OptimizationProblem
 from ._version import __version__
 
@@ -19,4 +18,4 @@ if not logging.root.handlers:
         _log.addHandler(handler)
 
 # __version__ = get_versions()["version"]
-__all__ = ["minimize", "dual_annealing", "differential_evolution", "basinhopping", "shgo", "direct", "brute", "OptimizationProblem"]
+__all__ = ["minimize", "dual_annealing", "differential_evolution", "basinhopping", "shgo", "direct", "OptimizationProblem"]

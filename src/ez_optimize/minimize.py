@@ -268,10 +268,10 @@ def minimize(
     # Run SciPy
     scipy_result = scipy_minimize(
         # Pass wrapped args
-        fun=problem.scipy.get_func(),
-        x0=problem.scipy.get_x0(),
-        bounds=problem.scipy.get_bounds(),
-        callback=problem.scipy.get_callback(),
+        fun=problem.scipy.minimize.func(),
+        x0=problem.scipy.minimize.x0(),
+        bounds=problem.scipy.minimize.bounds(),
+        callback=problem.scipy.minimize.callback(),
 
         # Pass args that aren't wrapped
         method=method,
@@ -283,4 +283,4 @@ def minimize(
         options=options,
     )
 
-    return problem.scipy.interpret_result(scipy_result)
+    return problem.scipy.minimize.interpret_result(scipy_result)
